@@ -1,0 +1,14 @@
+{
+  "name": "Limon Satış Takip",
+  "short_name": "Limon Takip",
+  "description": "Limon satışlarını kaydetmek için basit takip uygulaması",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f2",
+  "theme_color": "#3f8f29",
+  "icons": [
+    { "src": "icon.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
