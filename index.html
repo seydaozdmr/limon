@@ -409,6 +409,9 @@
   function save(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
+  function tazele(){
+    state = load();
+  }
   function uid(){
     return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
   }
@@ -525,6 +528,7 @@
       toplam: Math.round(kilo*fiyat*100)/100,
       odeme: odemeSecim
     };
+    tazele();
     state.satislar.push(satis);
     save();
 
@@ -637,6 +641,7 @@
     var not = cNot.value.trim();
     if(!ad){ toast("Ad girin"); return; }
 
+    tazele();
     if(duzenlenenCariId){
       var cari = state.cariler.find(function(c){return c.id===duzenlenenCariId;});
       if(cari){
@@ -712,6 +717,7 @@
         var msg = adetSatis>0 ? "Bu cariye ait "+adetSatis+" satış kaydı var. Yine de cariyi silmek istiyor musunuz? (Satışlar kalır, cari adı '(silinmiş cari)' görünür)" : "Bu cariyi silmek istediğinize emin misiniz?";
         if(confirm(msg)){
           if(duzenlenenCariId===id) duzenlemeyiBitir();
+          tazele();
           state.cariler = state.cariler.filter(function(c){return c.id!==id;});
           save();
           fillCariSelect(sCari, false);
@@ -818,6 +824,7 @@
         btn.addEventListener("click", function(){
           if(confirm("Bu satışı silmek istiyor musunuz?")){
             var id = btn.dataset.delsatis;
+            tazele();
             state.satislar = state.satislar.filter(function(s){return s.id!==id;});
             save();
             renderRapor();
@@ -898,6 +905,24 @@
   updateToplamPreview();
 
   document.getElementById("headerSub").textContent = new Date().toLocaleDateString("tr-TR",{weekday:"long", year:"numeric", month:"long", day:"numeric"});
+
+  function tumEkranlariYenile(){
+    tazele();
+    fillCariSelect(sCari, false);
+    fillCariSelect(document.getElementById("r-cari"), true);
+    renderCariListesi();
+    renderSonSatislar();
+    renderRapor();
+  }
+  document.addEventListener("visibilitychange", function(){
+    if(document.visibilityState==="visible") tumEkranlariYenile();
+  });
+  window.addEventListener("pageshow", function(e){
+    if(e.persisted) tumEkranlariYenile();
+  });
+  window.addEventListener("storage", function(e){
+    if(e.key===STORAGE_KEY) tumEkranlariYenile();
+  });
 
 })();
 </script>
