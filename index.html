@@ -561,6 +561,21 @@
   var cFormBaslik = document.getElementById("c-form-baslik");
   var duzenlenenCariId = null;
 
+  function formatTelefon(raw){
+    var digits = raw.replace(/\D/g,"").replace(/^0+/,"").slice(0,10);
+    if(!digits) return "";
+    var out = "0(" + digits.slice(0,3);
+    if(digits.length>=3) out += ")";
+    if(digits.length>3) out += digits.slice(3,6);
+    if(digits.length>6) out += " " + digits.slice(6,8);
+    if(digits.length>8) out += " " + digits.slice(8,10);
+    return out;
+  }
+  cTel.setAttribute("maxlength", "16");
+  cTel.addEventListener("input", function(){
+    cTel.value = formatTelefon(cTel.value);
+  });
+
   function duzenlemeyeBasla(cari){
     duzenlenenCariId = cari.id;
     cAd.value = cari.ad;
