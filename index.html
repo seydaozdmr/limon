@@ -310,7 +310,10 @@
       <label>Ad Soyad / Firma</label>
       <input type="text" id="c-ad" placeholder="Örn. Ahmet Yılmaz">
       <label>Telefon (opsiyonel)</label>
-      <input type="tel" id="c-tel" placeholder="05xx xxx xx xx">
+      <div class="row2" style="align-items:flex-start;">
+        <input type="tel" id="c-tel" placeholder="05xx xxx xx xx">
+        <button type="button" class="btn-secondary" id="c-rehber" style="flex:0 0 auto;width:auto;padding:10px 12px;">📇</button>
+      </div>
       <label>Not (opsiyonel)</label>
       <input type="text" id="c-not" placeholder="Adres, açıklama vs.">
       <button class="btn-primary" id="c-kaydet">Cari Ekle</button>
@@ -574,6 +577,29 @@
   cTel.setAttribute("maxlength", "16");
   cTel.addEventListener("input", function(){
     cTel.value = formatTelefon(cTel.value);
+  });
+
+  var cRehberBtn = document.getElementById("c-rehber");
+  var rehberDestekli = ("contacts" in navigator) && ("ContactsManager" in window);
+  if(!rehberDestekli) cRehberBtn.style.opacity = "0.4";
+
+  cRehberBtn.addEventListener("click", function(){
+    if(!rehberDestekli){
+      toast("Rehberden seçme bu cihaz/tarayıcıda desteklenmiyor (Android Chrome gerekli)");
+      return;
+    }
+    navigator.contacts.select(["name","tel"], {multiple:false}).then(function(secilenler){
+      if(!secilenler || secilenler.length===0) return;
+      var kisi = secilenler[0];
+      if(kisi.tel && kisi.tel.length>0){
+        cTel.value = formatTelefon(kisi.tel[0]);
+      }
+      if(kisi.name && kisi.name.length>0 && !cAd.value.trim()){
+        cAd.value = kisi.name[0];
+      }
+    }).catch(function(err){
+      if(err && err.name!=="AbortError") toast("Rehberden seçilemedi");
+    });
   });
 
   function duzenlemeyeBasla(cari){
