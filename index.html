@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Limon Satış Takip</title>
+<style>
+  :root{
+    --bg:#f4f6f2;
+    --card:#ffffff;
+    --primary:#3f8f29;
+    --primary-dark:#2e6b1e;
+    --accent:#f2c14e;
+    --text:#1e2a1a;
+    --muted:#6b7568;
+    --border:#e1e6dc;
+    --danger:#c0392b;
+    --peşin:#2e7d32;
+    --veresiye:#c0392b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding-bottom:70px;
+  }
+  header{
+    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+    color:#fff;
+    padding:16px 16px 20px;
+    position:sticky;
+    top:0;
+    z-index:10;
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
+  }
+  header h1{
+    margin:0;
+    font-size:20px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  header .sub{
+    font-size:12px;
+    opacity:.85;
+    margin-top:2px;
+  }
+  main{
+    padding:12px;
+    max-width:600px;
+    margin:0 auto;
+  }
+  .card{
+    background:var(--card);
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:12px;
+    box-shadow:0 1px 3px rgba(0,0,0,.06);
+    border:1px solid var(--border);
+  }
+  .card h2{
+    font-size:15px;
+    margin:0 0 10px;
+    color:var(--primary-dark);
+  }
+  label{
+    display:block;
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:4px;
+    margin-top:10px;
+  }
+  label:first-of-type{margin-top:0;}
+  input,select{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    font-size:15px;
+    background:#fafcf8;
+    color:var(--text);
+  }
+  input:focus,select:focus{
+    outline:none;
+    border-color:var(--primary);
+  }
+  .row2{
+    display:flex;
+    gap:10px;
+  }
+  .row2>div{flex:1;}
+  button{
+    border:none;
+    border-radius:10px;
+    padding:11px 16px;
+    font-size:15px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .btn-primary{
+    background:var(--primary);
+    color:#fff;
+    width:100%;
+    margin-top:14px;
+  }
+  .btn-primary:active{background:var(--primary-dark);}
+  .btn-secondary{
+    background:#eef1ea;
+    color:var(--text);
+  }
+  .btn-danger{
+    background:#fdecea;
+    color:var(--danger);
+  }
+  .toggle-group{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  }
+  .toggle-btn{
+    flex:1;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:#fafcf8;
+    text-align:center;
+    font-size:14px;
+    font-weight:600;
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .toggle-btn.active[data-val="peşin"]{
+    background:#e8f5e9;
+    border-color:var(--peşin);
+    color:var(--peşin);
+  }
+  .toggle-btn.active[data-val="veresiye"]{
+    background:#fdecea;
+    border-color:var(--veresiye);
+    color:var(--veresiye);
+  }
+  .total-preview{
+    text-align:center;
+    font-size:22px;
+    font-weight:700;
+    color:var(--primary-dark);
+    margin-top:12px;
+    padding:10px;
+    background:#f0f7ec;
+    border-radius:10px;
+  }
+  nav{
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:#fff;
+    display:flex;
+    border-top:1px solid var(--border);
+    box-shadow:0 -2px 8px rgba(0,0,0,.06);
+    z-index:10;
+  }
+  nav button{
+    flex:1;
+    background:none;
+    border-radius:0;
+    padding:10px 4px;
+    font-size:11px;
+    color:var(--muted);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+  }
+  nav button .ic{font-size:19px;}
+  nav button.active{color:var(--primary);}
+  .view{display:none;}
+  .view.active{display:block;}
+  .list-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid var(--border);
+    gap:8px;
+  }
+  .list-item:last-child{border-bottom:none;}
+  .list-item .name{font-weight:600;font-size:14px;}
+  .list-item .meta{font-size:12px;color:var(--muted);}
+  .pill{
+    font-size:11px;
+    font-weight:700;
+    padding:3px 8px;
+    border-radius:20px;
+  }
+  .pill.peşin{background:#e8f5e9;color:var(--peşin);}
+  .pill.veresiye{background:#fdecea;color:var(--veresiye);}
+  .empty{
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+    padding:20px 0;
+  }
+  .icon-btn{
+    background:none;
+    border:none;
+    font-size:16px;
+    padding:4px 8px;
+    color:var(--muted);
+  }
+  .summary-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .stat{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px;
+    text-align:center;
+  }
+  .stat .val{font-size:18px;font-weight:700;color:var(--primary-dark);}
+  .stat .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+  .filter-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:10px;
+    overflow-x:auto;
+  }
+  .filter-row select,.filter-row input{width:auto;flex:1;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{padding:6px 4px;text-align:left;border-bottom:1px solid var(--border);}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;}
+  .swipe-actions{display:flex;gap:6px;}
+  .backup-row{display:flex;gap:8px;margin-top:10px;}
+  .backup-row button{flex:1;font-size:13px;padding:9px;}
+  #toast{
+    position:fixed;
+    bottom:80px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#2e2e2e;
+    color:#fff;
+    padding:9px 16px;
+    border-radius:20px;
+    font-size:13px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s;
+    z-index:50;
+  }
+  #toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍋 Limon Satış Takip</h1>
+  <div class="sub" id="headerSub">Hoş geldin</div>
+</header>
+
+<main>
+
+  <!-- SATIŞ EKLE -->
+  <section class="view active" id="view-satis">
+    <div class="card">
+      <h2>Yeni Satış</h2>
+      <label>Cari</label>
+      <select id="s-cari"></select>
+
+      <div class="row2">
+        <div>
+          <label>Tarih</label>
+          <input type="date" id="s-tarih">
+        </div>
+        <div>
+          <label>Kilo (kg)</label>
+          <input type="number" id="s-kilo" step="0.01" inputmode="decimal" placeholder="0">
+        </div>
+      </div>
+
+      <label>Kilo Bazlı Fiyat (₺/kg)</label>
+      <input type="number" id="s-fiyat" step="0.01" inputmode="decimal" placeholder="0">
+
+      <label>Ödeme Şekli</label>
+      <div class="toggle-group" id="s-odeme">
+        <div class="toggle-btn active" data-val="peşin">Peşin</div>
+        <div class="toggle-btn" data-val="veresiye">Veresiye</div>
+      </div>
+
+      <div class="total-preview" id="s-toplam">Toplam: 0,00 ₺</div>
+
+      <button class="btn-primary" id="s-kaydet">Satışı Kaydet</button>
+    </div>
+
+    <div class="card">
+      <h2>Son Satışlar</h2>
+      <div id="son-satislar" class="empty">Henüz satış yok.</div>
+    </div>
+  </section>
+
+  <!-- CARILER -->
+  <section class="view" id="view-cari">
+    <div class="card">
+      <h2 id="c-form-baslik">Yeni Cari Ekle</h2>
+      <label>Ad Soyad / Firma</label>
+      <input type="text" id="c-ad" placeholder="Örn. Ahmet Yılmaz">
+      <label>Telefon (opsiyonel)</label>
+      <input type="tel" id="c-tel" placeholder="05xx xxx xx xx">
+      <label>Not (opsiyonel)</label>
+      <input type="text" id="c-not" placeholder="Adres, açıklama vs.">
+      <button class="btn-primary" id="c-kaydet">Cari Ekle</button>
+      <button class="btn-secondary" id="c-iptal" style="width:100%;margin-top:8px;display:none;">İptal</button>
+    </div>
+    <div class="card">
+      <h2>Cari Listesi</h2>
+      <div id="cari-listesi" class="empty">Henüz cari yok.</div>
+    </div>
+  </section>
+
+  <!-- RAPORLAR -->
+  <section class="view" id="view-rapor">
+    <div class="summary-grid" id="ozet-grid"></div>
+
+    <div class="card">
+      <h2>Filtre</h2>
+      <div class="filter-row">
+        <select id="r-cari"></select>
+        <select id="r-odeme">
+          <option value="">Tümü</option>
+          <option value="peşin">Peşin</option>
+          <option value="veresiye">Veresiye</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <input type="date" id="r-bas">
+        <input type="date" id="r-bit">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Cari Bazlı Özet</h2>
+      <div id="cari-ozet" class="empty">Veri yok.</div>
+    </div>
+
+    <div class="card">
+      <h2>Satış Listesi</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Tarih</th><th>Cari</th><th>Kg</th><th>₺/kg</th><th>Toplam</th><th>Ödeme</th><th></th></tr></thead>
+          <tbody id="rapor-tablo"></tbody>
+        </table>
+      </div>
+      <div id="rapor-empty" class="empty" style="display:none;">Kayıt bulunamadı.</div>
+    </div>
+  </section>
+
+  <!-- YEDEKLEME -->
+  <section class="view" id="view-yedek">
+    <div class="card">
+      <h2>Veri Yedekleme</h2>
+      <p style="font-size:13px;color:var(--muted);margin:0 0 8px;">
+        Veriler bu cihazın tarayıcısında (localStorage) saklanır. Farklı bir cihaza taşımak veya kaybolma riskine karşı yedek almak için JSON dosyası indir/yükle.
+      </p>
+      <div class="backup-row">
+        <button class="btn-secondary" id="y-disa">📤 Dışa Aktar (İndir)</button>
+        <button class="btn-secondary" id="y-ice">📥 İçe Aktar</button>
+      </div>
+      <input type="file" id="y-file" accept=".json" style="display:none;">
+      <div class="backup-row">
+        <button class="btn-danger" id="y-temizle">🗑 Tüm Veriyi Sıfırla</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav>
+  <button class="active" data-view="satis"><span class="ic">🧾</span>Satış</button>
+  <button data-view="cari"><span class="ic">👤</span>Cariler</button>
+  <button data-view="rapor"><span class="ic">📊</span>Raporlar</button>
+  <button data-view="yedek"><span class="ic">💾</span>Yedek</button>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "limon_takip_v1";
+  var state = load();
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return { cariler: [], satislar: [] };
+  }
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+  function uid(){
+    return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+  }
+  function toast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    setTimeout(function(){ t.classList.remove("show"); }, 1800);
+  }
+  function fmtPara(n){
+    return (Math.round(n*100)/100).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " ₺";
+  }
+  function fmtTarih(iso){
+    var d = new Date(iso+"T00:00:00");
+    if(isNaN(d)) return iso;
+    return d.toLocaleDateString("tr-TR");
+  }
+  function todayISO(){
+    var d = new Date();
+    var m = (d.getMonth()+1).toString().padStart(2,"0");
+    var day = d.getDate().toString().padStart(2,"0");
+    return d.getFullYear()+"-"+m+"-"+day;
+  }
+  function cariAdi(id){
+    var c = state.cariler.find(function(x){return x.id===id;});
+    return c ? c.ad : "(silinmiş cari)";
+  }
+
+  // ---------- NAV ----------
+  var navBtns = document.querySelectorAll("nav button");
+  navBtns.forEach(function(btn){
+    btn.addEventListener("click", function(){
+      navBtns.forEach(function(b){b.classList.remove("active");});
+      btn.classList.add("active");
+      document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active");});
+      document.getElementById("view-"+btn.dataset.view).classList.add("active");
+      if(btn.dataset.view==="rapor") renderRapor();
+      if(btn.dataset.view==="cari") renderCariListesi();
+      if(btn.dataset.view==="satis") renderSonSatislar();
+    });
+  });
+
+  // ---------- SATIŞ EKRANI ----------
+  var sCari = document.getElementById("s-cari");
+  var sTarih = document.getElementById("s-tarih");
+  var sKilo = document.getElementById("s-kilo");
+  var sFiyat = document.getElementById("s-fiyat");
+  var sToplam = document.getElementById("s-toplam");
+  var sOdemeGroup = document.getElementById("s-odeme");
+  var odemeSecim = "peşin";
+
+  sTarih.value = todayISO();
+
+  sOdemeGroup.querySelectorAll(".toggle-btn").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      sOdemeGroup.querySelectorAll(".toggle-btn").forEach(function(b){b.classList.remove("active");});
+      btn.classList.add("active");
+      odemeSecim = btn.dataset.val;
+    });
+  });
+
+  function updateToplamPreview(){
+    var kilo = parseFloat(sKilo.value) || 0;
+    var fiyat = parseFloat(sFiyat.value) || 0;
+    sToplam.textContent = "Toplam: " + fmtPara(kilo*fiyat);
+  }
+  sKilo.addEventListener("input", updateToplamPreview);
+  sFiyat.addEventListener("input", updateToplamPreview);
+
+  function fillCariSelect(sel, withAllOption){
+    var cur = sel.value;
+    sel.innerHTML = "";
+    if(withAllOption){
+      var opt0 = document.createElement("option");
+      opt0.value = "";
+      opt0.textContent = "Tüm Cariler";
+      sel.appendChild(opt0);
+    }
+    if(state.cariler.length===0){
+      var opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Önce cari ekleyin";
+      sel.appendChild(opt);
+      return;
+    }
+    state.cariler.forEach(function(c){
+      var opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = c.ad;
+      sel.appendChild(opt);
+    });
+    if(cur) sel.value = cur;
+  }
+
+  document.getElementById("s-kaydet").addEventListener("click", function(){
+    var cariId = sCari.value;
+    var kilo = parseFloat(sKilo.value);
+    var fiyat = parseFloat(sFiyat.value);
+    var tarih = sTarih.value;
+
+    if(!cariId){ toast("Önce cari seçin / ekleyin"); return; }
+    if(!tarih){ toast("Tarih seçin"); return; }
+    if(!kilo || kilo<=0){ toast("Geçerli kilo girin"); return; }
+    if(!fiyat || fiyat<=0){ toast("Geçerli fiyat girin"); return; }
+
+    var satis = {
+      id: uid(),
+      cariId: cariId,
+      tarih: tarih,
+      kilo: kilo,
+      fiyat: fiyat,
+      toplam: Math.round(kilo*fiyat*100)/100,
+      odeme: odemeSecim
+    };
+    state.satislar.push(satis);
+    save();
+
+    sKilo.value = "";
+    sFiyat.value = "";
+    updateToplamPreview();
+    toast("Satış kaydedildi ✓");
+    renderSonSatislar();
+  });
+
+  function renderSonSatislar(){
+    var el = document.getElementById("son-satislar");
+    var list = state.satislar.slice().sort(function(a,b){return b.tarih.localeCompare(a.tarih) || b.id.localeCompare(a.id);}).slice(0,8);
+    if(list.length===0){
+      el.className = "empty";
+      el.textContent = "Henüz satış yok.";
+      return;
+    }
+    el.className = "";
+    el.innerHTML = list.map(function(s){
+      return '<div class="list-item">'+
+        '<div>'+
+          '<div class="name">'+cariAdi(s.cariId)+'</div>'+
+          '<div class="meta">'+fmtTarih(s.tarih)+' · '+s.kilo+' kg × '+fmtPara(s.fiyat)+'</div>'+
+        '</div>'+
+        '<div style="text-align:right">'+
+          '<div class="name">'+fmtPara(s.toplam)+'</div>'+
+          '<span class="pill '+s.odeme+'">'+(s.odeme==="peşin"?"Peşin":"Veresiye")+'</span>'+
+        '</div>'+
+      '</div>';
+    }).join("");
+  }
+
+  // ---------- CARİ EKRANI ----------
+  var cAd = document.getElementById("c-ad");
+  var cTel = document.getElementById("c-tel");
+  var cNot = document.getElementById("c-not");
+  var cKaydetBtn = document.getElementById("c-kaydet");
+  var cIptalBtn = document.getElementById("c-iptal");
+  var cFormBaslik = document.getElementById("c-form-baslik");
+  var duzenlenenCariId = null;
+
+  function duzenlemeyeBasla(cari){
+    duzenlenenCariId = cari.id;
+    cAd.value = cari.ad;
+    cTel.value = cari.tel || "";
+    cNot.value = cari.not || "";
+    cFormBaslik.textContent = "Cariyi Düzenle";
+    cKaydetBtn.textContent = "Güncelle";
+    cIptalBtn.style.display = "block";
+    cAd.scrollIntoView({behavior:"smooth", block:"center"});
+    cAd.focus();
+  }
+  function duzenlemeyiBitir(){
+    duzenlenenCariId = null;
+    cAd.value = "";
+    cTel.value = "";
+    cNot.value = "";
+    cFormBaslik.textContent = "Yeni Cari Ekle";
+    cKaydetBtn.textContent = "Cari Ekle";
+    cIptalBtn.style.display = "none";
+  }
+
+  cIptalBtn.addEventListener("click", duzenlemeyiBitir);
+
+  cKaydetBtn.addEventListener("click", function(){
+    var ad = cAd.value.trim();
+    var tel = cTel.value.trim();
+    var not = cNot.value.trim();
+    if(!ad){ toast("Ad girin"); return; }
+
+    if(duzenlenenCariId){
+      var cari = state.cariler.find(function(c){return c.id===duzenlenenCariId;});
+      if(cari){
+        cari.ad = ad;
+        cari.tel = tel;
+        cari.not = not;
+      }
+      save();
+      toast("Cari güncellendi ✓");
+      duzenlemeyiBitir();
+    } else {
+      state.cariler.push({ id: uid(), ad: ad, tel: tel, not: not });
+      save();
+      duzenlemeyiBitir();
+      toast("Cari eklendi ✓");
+    }
+    fillCariSelect(sCari, false);
+    fillCariSelect(document.getElementById("r-cari"), true);
+    renderCariListesi();
+    renderSonSatislar();
+  });
+
+  function renderCariListesi(){
+    var el = document.getElementById("cari-listesi");
+    if(state.cariler.length===0){
+      el.className = "empty";
+      el.textContent = "Henüz cari yok.";
+      return;
+    }
+    el.className = "";
+    el.innerHTML = state.cariler.map(function(c){
+      return '<div class="list-item">'+
+        '<div>'+
+          '<div class="name">'+c.ad+'</div>'+
+          '<div class="meta">'+(c.tel||"")+(c.not?(" · "+c.not):"")+'</div>'+
+        '</div>'+
+        '<div class="swipe-actions">'+
+          '<button class="icon-btn" data-edit="'+c.id+'">✏️</button>'+
+          '<button class="icon-btn" data-del="'+c.id+'">🗑</button>'+
+        '</div>'+
+      '</div>';
+    }).join("");
+    el.querySelectorAll("[data-edit]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.dataset.edit;
+        var cari = state.cariler.find(function(c){return c.id===id;});
+        if(cari) duzenlemeyeBasla(cari);
+      });
+    });
+    el.querySelectorAll("[data-del]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.dataset.del;
+        var adetSatis = state.satislar.filter(function(s){return s.cariId===id;}).length;
+        var msg = adetSatis>0 ? "Bu cariye ait "+adetSatis+" satış kaydı var. Yine de cariyi silmek istiyor musunuz? (Satışlar kalır, cari adı '(silinmiş cari)' görünür)" : "Bu cariyi silmek istediğinize emin misiniz?";
+        if(confirm(msg)){
+          if(duzenlenenCariId===id) duzenlemeyiBitir();
+          state.cariler = state.cariler.filter(function(c){return c.id!==id;});
+          save();
+          fillCariSelect(sCari, false);
+          fillCariSelect(document.getElementById("r-cari"), true);
+          renderCariListesi();
+          renderSonSatislar();
+          toast("Cari silindi");
+        }
+      });
+    });
+  }
+
+  // ---------- RAPOR EKRANI ----------
+  var rCari = document.getElementById("r-cari");
+  var rOdeme = document.getElementById("r-odeme");
+  var rBas = document.getElementById("r-bas");
+  var rBit = document.getElementById("r-bit");
+  [rCari, rOdeme, rBas, rBit].forEach(function(el){
+    el.addEventListener("change", renderRapor);
+  });
+
+  function filtreliSatislar(){
+    var cariId = rCari.value;
+    var odeme = rOdeme.value;
+    var bas = rBas.value;
+    var bit = rBit.value;
+    return state.satislar.filter(function(s){
+      if(cariId && s.cariId!==cariId) return false;
+      if(odeme && s.odeme!==odeme) return false;
+      if(bas && s.tarih < bas) return false;
+      if(bit && s.tarih > bit) return false;
+      return true;
+    }).sort(function(a,b){return b.tarih.localeCompare(a.tarih);});
+  }
+
+  function renderRapor(){
+    fillCariSelect(rCari, true);
+    var list = filtreliSatislar();
+
+    var toplam = 0, pesin = 0, veresiye = 0, kiloToplam = 0;
+    list.forEach(function(s){
+      toplam += s.toplam;
+      kiloToplam += s.kilo;
+      if(s.odeme==="peşin") pesin += s.toplam; else veresiye += s.toplam;
+    });
+
+    document.getElementById("ozet-grid").innerHTML =
+      '<div class="stat"><div class="val">'+fmtPara(toplam)+'</div><div class="lbl">Toplam Ciro</div></div>'+
+      '<div class="stat"><div class="val">'+kiloToplam.toLocaleString("tr-TR")+' kg</div><div class="lbl">Toplam Kilo</div></div>'+
+      '<div class="stat"><div class="val">'+fmtPara(pesin)+'</div><div class="lbl">Peşin</div></div>'+
+      '<div class="stat"><div class="val">'+fmtPara(veresiye)+'</div><div class="lbl">Veresiye (Alacak)</div></div>';
+
+    // cari bazlı özet
+    var cariMap = {};
+    list.forEach(function(s){
+      if(!cariMap[s.cariId]) cariMap[s.cariId] = {toplam:0, veresiye:0, kilo:0};
+      cariMap[s.cariId].toplam += s.toplam;
+      cariMap[s.cariId].kilo += s.kilo;
+      if(s.odeme==="veresiye") cariMap[s.cariId].veresiye += s.toplam;
+    });
+    var cariOzetEl = document.getElementById("cari-ozet");
+    var cariIds = Object.keys(cariMap);
+    if(cariIds.length===0){
+      cariOzetEl.className = "empty";
+      cariOzetEl.textContent = "Veri yok.";
+    } else {
+      cariOzetEl.className = "";
+      cariIds.sort(function(a,b){return cariMap[b].toplam - cariMap[a].toplam;});
+      cariOzetEl.innerHTML = cariIds.map(function(id){
+        var d = cariMap[id];
+        return '<div class="list-item">'+
+          '<div>'+
+            '<div class="name">'+cariAdi(id)+'</div>'+
+            '<div class="meta">'+d.kilo.toLocaleString("tr-TR")+' kg</div>'+
+          '</div>'+
+          '<div style="text-align:right">'+
+            '<div class="name">'+fmtPara(d.toplam)+'</div>'+
+            (d.veresiye>0 ? '<div class="meta" style="color:var(--veresiye)">Alacak: '+fmtPara(d.veresiye)+'</div>' : '')+
+          '</div>'+
+        '</div>';
+      }).join("");
+    }
+
+    // tablo
+    var tbody = document.getElementById("rapor-tablo");
+    var emptyEl = document.getElementById("rapor-empty");
+    if(list.length===0){
+      tbody.innerHTML = "";
+      emptyEl.style.display = "block";
+    } else {
+      emptyEl.style.display = "none";
+      tbody.innerHTML = list.map(function(s){
+        return '<tr>'+
+          '<td>'+fmtTarih(s.tarih)+'</td>'+
+          '<td>'+cariAdi(s.cariId)+'</td>'+
+          '<td>'+s.kilo+'</td>'+
+          '<td>'+fmtPara(s.fiyat)+'</td>'+
+          '<td>'+fmtPara(s.toplam)+'</td>'+
+          '<td><span class="pill '+s.odeme+'">'+(s.odeme==="peşin"?"Peşin":"Veresiye")+'</span></td>'+
+          '<td><button class="icon-btn" data-delsatis="'+s.id+'">🗑</button></td>'+
+        '</tr>';
+      }).join("");
+      tbody.querySelectorAll("[data-delsatis]").forEach(function(btn){
+        btn.addEventListener("click", function(){
+          if(confirm("Bu satışı silmek istiyor musunuz?")){
+            var id = btn.dataset.delsatis;
+            state.satislar = state.satislar.filter(function(s){return s.id!==id;});
+            save();
+            renderRapor();
+            renderSonSatislar();
+            toast("Satış silindi");
+          }
+        });
+      });
+    }
+  }
+
+  // ---------- YEDEKLEME ----------
+  document.getElementById("y-disa").addEventListener("click", function(){
+    var blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    var d = new Date();
+    var stamp = d.toISOString().slice(0,10);
+    a.href = url;
+    a.download = "limon-yedek-"+stamp+".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast("Yedek indirildi");
+  });
+
+  document.getElementById("y-ice").addEventListener("click", function(){
+    document.getElementById("y-file").click();
+  });
+  document.getElementById("y-file").addEventListener("change", function(e){
+    var file = e.target.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        var data = JSON.parse(ev.target.result);
+        if(!data.cariler || !data.satislar) throw new Error("Geçersiz format");
+        if(confirm("İçe aktarma mevcut verinin üzerine yazacak. Devam edilsin mi?")){
+          state = data;
+          save();
+          fillCariSelect(sCari, false);
+          fillCariSelect(rCari, true);
+          renderCariListesi();
+          renderSonSatislar();
+          renderRapor();
+          toast("Veri içe aktarıldı ✓");
+        }
+      }catch(err){
+        toast("Dosya okunamadı: geçersiz JSON");
+      }
+      e.target.value = "";
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById("y-temizle").addEventListener("click", function(){
+    if(confirm("TÜM veriler (cariler ve satışlar) silinecek. Emin misiniz?")){
+      if(confirm("Bu işlem geri alınamaz. Son kez onaylıyor musunuz?")){
+        state = { cariler: [], satislar: [] };
+        save();
+        fillCariSelect(sCari, false);
+        fillCariSelect(rCari, true);
+        renderCariListesi();
+        renderSonSatislar();
+        renderRapor();
+        toast("Tüm veriler silindi");
+      }
+    }
+  });
+
+  // ---------- INIT ----------
+  fillCariSelect(sCari, false);
+  fillCariSelect(rCari, true);
+  renderCariListesi();
+  renderSonSatislar();
+  renderRapor();
+  updateToplamPreview();
+
+  document.getElementById("headerSub").textContent = new Date().toLocaleDateString("tr-TR",{weekday:"long", year:"numeric", month:"long", day:"numeric"});
+
+})();
+</script>
+
+</body>
+</html>
