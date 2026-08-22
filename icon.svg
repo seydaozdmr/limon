@@ -1,4 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="36" fill="#3f8f29"/>
-  <text x="96" y="130" font-size="112" text-anchor="middle">🍋</text>
+  <rect width="192" height="192" rx="40" fill="#3f8f29"/>
+  <g transform="translate(100,108) rotate(-18)">
+    <ellipse cx="0" cy="0" rx="56" ry="40" fill="#f6cb3e"/>
+    <ellipse cx="-54" cy="0" rx="9" ry="7" fill="#e3ac1c"/>
+    <ellipse cx="54" cy="0" rx="9" ry="7" fill="#e3ac1c"/>
+    <ellipse cx="-16" cy="-14" rx="20" ry="11" fill="#ffffff" opacity="0.3"/>
+    <path d="M -30 -20 Q 0 -30 30 -20" fill="none" stroke="#e3ac1c" stroke-width="2.5" opacity="0.35" stroke-linecap="round"/>
+    <path d="M -30 18 Q 0 28 30 18" fill="none" stroke="#e3ac1c" stroke-width="2.5" opacity="0.35" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(140,56) rotate(-18)">
+    <path d="M0 0 C -18 -14 -34 -6 -36 8 C -20 12 -6 8 0 0 Z" fill="#5cb84a" stroke="#3f8f29" stroke-width="2"/>
+  </g>
 </svg>
