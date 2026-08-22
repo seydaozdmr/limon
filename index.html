@@ -321,6 +321,7 @@
     </div>
     <div class="card">
       <h2>Cari Listesi</h2>
+      <input type="text" id="c-ara" placeholder="🔍 Cari ara (ad, telefon, not)" style="margin-bottom:10px;">
       <div id="cari-listesi" class="empty">Henüz cari yok.</div>
     </div>
   </section>
@@ -493,7 +494,9 @@
       sel.appendChild(opt);
       return;
     }
-    state.cariler.forEach(function(c){
+    state.cariler.slice().sort(function(a,b){
+      return a.ad.localeCompare(b.ad, "tr-TR", {sensitivity:"base"});
+    }).forEach(function(c){
       var opt = document.createElement("option");
       opt.value = c.id;
       opt.textContent = c.ad;
@@ -656,6 +659,9 @@
     renderSonSatislar();
   });
 
+  var cAraInput = document.getElementById("c-ara");
+  cAraInput.addEventListener("input", renderCariListesi);
+
   function renderCariListesi(){
     var el = document.getElementById("cari-listesi");
     if(state.cariler.length===0){
@@ -663,8 +669,24 @@
       el.textContent = "Henüz cari yok.";
       return;
     }
+    var terim = cAraInput.value.trim().toLocaleLowerCase("tr-TR");
+    var liste = state.cariler.slice().sort(function(a,b){
+      return a.ad.localeCompare(b.ad, "tr-TR", {sensitivity:"base"});
+    });
+    if(terim){
+      liste = liste.filter(function(c){
+        return (c.ad||"").toLocaleLowerCase("tr-TR").indexOf(terim)>-1 ||
+               (c.tel||"").toLocaleLowerCase("tr-TR").indexOf(terim)>-1 ||
+               (c.not||"").toLocaleLowerCase("tr-TR").indexOf(terim)>-1;
+      });
+    }
+    if(liste.length===0){
+      el.className = "empty";
+      el.textContent = "Eşleşen cari bulunamadı.";
+      return;
+    }
     el.className = "";
-    el.innerHTML = state.cariler.map(function(c){
+    el.innerHTML = liste.map(function(c){
       return '<div class="list-item">'+
         '<div>'+
           '<div class="name">'+c.ad+'</div>'+
