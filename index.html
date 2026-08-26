@@ -276,7 +276,7 @@
   <!-- SATIŞ EKLE -->
   <section class="view active" id="view-satis">
     <div class="card">
-      <h2>Yeni Satış</h2>
+      <h2 id="s-form-baslik">Yeni Satış</h2>
       <label>Cari</label>
       <select id="s-cari"></select>
 
@@ -303,6 +303,7 @@
       <div class="total-preview" id="s-toplam">Toplam: 0,00 ₺</div>
 
       <button class="btn-primary" id="s-kaydet">Satışı Kaydet</button>
+      <button type="button" class="btn-secondary" id="s-iptal" style="width:100%;margin-top:8px;display:none;">İptal</button>
     </div>
 
     <div class="card">
@@ -469,9 +470,50 @@
   var sFiyat = document.getElementById("s-fiyat");
   var sToplam = document.getElementById("s-toplam");
   var sOdemeGroup = document.getElementById("s-odeme");
+  var sFormBaslik = document.getElementById("s-form-baslik");
+  var sKaydetBtn = document.getElementById("s-kaydet");
+  var sIptalBtn = document.getElementById("s-iptal");
   var odemeSecim = "peşin";
+  var duzenlenenSatisId = null;
 
   sTarih.value = todayISO();
+
+  function odemeSecimAyarla(val){
+    odemeSecim = val;
+    sOdemeGroup.querySelectorAll(".toggle-btn").forEach(function(b){
+      b.classList.toggle("active", b.dataset.val===val);
+    });
+  }
+
+  function satisDuzenlemeyeBasla(satis){
+    duzenlenenSatisId = satis.id;
+    sCari.value = satis.cariId;
+    sTarih.value = satis.tarih;
+    sKilo.value = satis.kilo;
+    sFiyat.value = satis.fiyat;
+    odemeSecimAyarla(satis.odeme);
+    updateToplamPreview();
+    sFormBaslik.textContent = "Satışı Düzenle";
+    sKaydetBtn.textContent = "Satışı Güncelle";
+    sIptalBtn.style.display = "block";
+    document.querySelectorAll("nav button").forEach(function(b){b.classList.remove("active");});
+    document.querySelector('nav button[data-view="satis"]').classList.add("active");
+    document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active");});
+    document.getElementById("view-satis").classList.add("active");
+    sCari.scrollIntoView({behavior:"smooth", block:"center"});
+  }
+  function satisDuzenlemeyiBitir(){
+    duzenlenenSatisId = null;
+    sTarih.value = todayISO();
+    sKilo.value = "";
+    sFiyat.value = "";
+    odemeSecimAyarla("peşin");
+    updateToplamPreview();
+    sFormBaslik.textContent = "Yeni Satış";
+    sKaydetBtn.textContent = "Satışı Kaydet";
+    sIptalBtn.style.display = "none";
+  }
+  sIptalBtn.addEventListener("click", satisDuzenlemeyiBitir);
 
   sOdemeGroup.querySelectorAll(".toggle-btn").forEach(function(btn){
     btn.addEventListener("click", function(){
@@ -527,24 +569,40 @@
     if(!kilo || kilo<=0){ toast("Geçerli kilo girin"); return; }
     if(!fiyat || fiyat<=0){ toast("Geçerli fiyat girin"); return; }
 
-    var satis = {
-      id: uid(),
-      cariId: cariId,
-      tarih: tarih,
-      kilo: kilo,
-      fiyat: fiyat,
-      toplam: Math.round(kilo*fiyat*100)/100,
-      odeme: odemeSecim
-    };
+    var toplam = Math.round(kilo*fiyat*100)/100;
     tazele();
-    state.satislar.push(satis);
-    save();
 
-    sKilo.value = "";
-    sFiyat.value = "";
-    updateToplamPreview();
-    toast("Satış kaydedildi ✓");
+    if(duzenlenenSatisId){
+      var satis = state.satislar.find(function(s){return s.id===duzenlenenSatisId;});
+      if(satis){
+        satis.cariId = cariId;
+        satis.tarih = tarih;
+        satis.kilo = kilo;
+        satis.fiyat = fiyat;
+        satis.toplam = toplam;
+        satis.odeme = odemeSecim;
+      }
+      save();
+      satisDuzenlemeyiBitir();
+      toast("Satış güncellendi ✓");
+    } else {
+      state.satislar.push({
+        id: uid(),
+        cariId: cariId,
+        tarih: tarih,
+        kilo: kilo,
+        fiyat: fiyat,
+        toplam: toplam,
+        odeme: odemeSecim
+      });
+      save();
+      sKilo.value = "";
+      sFiyat.value = "";
+      updateToplamPreview();
+      toast("Satış kaydedildi ✓");
+    }
     renderSonSatislar();
+    renderRapor();
   });
 
   function renderSonSatislar(){
@@ -825,13 +883,21 @@
           '<td>'+fmtPara(s.fiyat)+'</td>'+
           '<td>'+fmtPara(s.toplam)+'</td>'+
           '<td><span class="pill '+s.odeme+'">'+(s.odeme==="peşin"?"Peşin":"Veresiye")+'</span></td>'+
-          '<td><button class="icon-btn" data-delsatis="'+s.id+'">🗑</button></td>'+
+          '<td style="white-space:nowrap;"><button class="icon-btn" data-editsatis="'+s.id+'">✏️</button><button class="icon-btn" data-delsatis="'+s.id+'">🗑</button></td>'+
         '</tr>';
       }).join("");
+      tbody.querySelectorAll("[data-editsatis]").forEach(function(btn){
+        btn.addEventListener("click", function(){
+          var id = btn.dataset.editsatis;
+          var satis = state.satislar.find(function(s){return s.id===id;});
+          if(satis) satisDuzenlemeyeBasla(satis);
+        });
+      });
       tbody.querySelectorAll("[data-delsatis]").forEach(function(btn){
         btn.addEventListener("click", function(){
           if(confirm("Bu satışı silmek istiyor musunuz?")){
             var id = btn.dataset.delsatis;
+            if(duzenlenenSatisId===id) satisDuzenlemeyiBitir();
             tazele();
             state.satislar = state.satislar.filter(function(s){return s.id!==id;});
             save();
