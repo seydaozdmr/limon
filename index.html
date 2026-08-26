@@ -235,11 +235,11 @@
   .stat .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
   .filter-row{
     display:flex;
+    flex-wrap:wrap;
     gap:8px;
     margin-bottom:10px;
-    overflow-x:auto;
   }
-  .filter-row select,.filter-row input{width:auto;flex:1;}
+  .filter-row select,.filter-row input{width:auto;flex:1 1 130px;min-width:0;}
   table{width:100%;border-collapse:collapse;font-size:13px;}
   th,td{padding:6px 4px;text-align:left;border-bottom:1px solid var(--border);}
   th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;}
