@@ -826,7 +826,7 @@
     el.className = "";
     el.innerHTML = liste.map(function(c){
       return '<div class="list-item">'+
-        '<div>'+
+        '<div class="cari-bilgi" data-call="'+c.id+'" style="cursor:pointer;">'+
           '<div class="name">'+c.ad+'</div>'+
           '<div class="meta">'+(c.tel||"")+(c.not?(" · "+c.not):"")+'</div>'+
         '</div>'+
@@ -836,6 +836,16 @@
         '</div>'+
       '</div>';
     }).join("");
+    el.querySelectorAll("[data-call]").forEach(function(div){
+      div.addEventListener("click", function(){
+        var id = div.dataset.call;
+        var cari = state.cariler.find(function(c){return c.id===id;});
+        if(!cari) return;
+        var rakamlar = (cari.tel||"").replace(/\D/g,"");
+        if(!rakamlar){ toast("Bu carinin telefon numarası kayıtlı değil"); return; }
+        window.location.href = "tel:"+rakamlar;
+      });
+    });
     el.querySelectorAll("[data-edit]").forEach(function(btn){
       btn.addEventListener("click", function(){
         var id = btn.dataset.edit;
