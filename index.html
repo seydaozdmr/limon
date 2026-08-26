@@ -280,6 +280,9 @@
       <label>Cari</label>
       <select id="s-cari"></select>
 
+      <label>Ürün Türü</label>
+      <select id="s-urun"></select>
+
       <div class="row2">
         <div>
           <label>Tarih</label>
@@ -343,6 +346,7 @@
       <h2>Filtre</h2>
       <div class="filter-row">
         <select id="r-cari"></select>
+        <select id="r-urun"></select>
         <select id="r-odeme">
           <option value="">Tümü</option>
           <option value="peşin">Peşin</option>
@@ -364,7 +368,7 @@
       <h2>Satış Listesi</h2>
       <div style="overflow-x:auto">
         <table>
-          <thead><tr><th>Tarih</th><th>Cari</th><th>Kg</th><th>₺/kg</th><th>Toplam</th><th>Ödeme</th><th></th></tr></thead>
+          <thead><tr><th>Tarih</th><th>Cari</th><th>Ürün</th><th>Kg</th><th>₺/kg</th><th>Toplam</th><th>Ödeme</th><th></th></tr></thead>
           <tbody id="rapor-tablo"></tbody>
         </table>
       </div>
@@ -372,8 +376,20 @@
     </div>
   </section>
 
-  <!-- YEDEKLEME -->
-  <section class="view" id="view-yedek">
+  <!-- AYARLAR -->
+  <section class="view" id="view-ayarlar">
+    <div class="card">
+      <h2 id="u-form-baslik">Yeni Ürün Türü Ekle</h2>
+      <label>Ürün Türü Adı</label>
+      <input type="text" id="u-ad" placeholder="Örn. Limon, Mandalina">
+      <button class="btn-primary" id="u-kaydet">Ürün Türü Ekle</button>
+      <button type="button" class="btn-secondary" id="u-iptal" style="width:100%;margin-top:8px;display:none;">İptal</button>
+    </div>
+    <div class="card">
+      <h2>Ürün Türleri</h2>
+      <div id="urun-listesi" class="empty">Henüz ürün türü yok.</div>
+    </div>
+
     <div class="card">
       <h2>Veri Yedekleme</h2>
       <p style="font-size:13px;color:var(--muted);margin:0 0 8px;">
@@ -396,7 +412,7 @@
   <button class="active" data-view="satis"><span class="ic">🧾</span>Satış</button>
   <button data-view="cari"><span class="ic">👤</span>Cariler</button>
   <button data-view="rapor"><span class="ic">📊</span>Raporlar</button>
-  <button data-view="yedek"><span class="ic">💾</span>Yedek</button>
+  <button data-view="ayarlar"><span class="ic">⚙️</span>Ayarlar</button>
 </nav>
 
 <div id="toast"></div>
@@ -408,12 +424,22 @@
   var STORAGE_KEY = "limon_takip_v1";
   var state = load();
 
+  function normalizeState(d){
+    if(!d) d = {};
+    if(!Array.isArray(d.cariler)) d.cariler = [];
+    if(!Array.isArray(d.satislar)) d.satislar = [];
+    if(!Array.isArray(d.urunTurleri) || d.urunTurleri.length===0){
+      d.urunTurleri = [{ id:"limon-varsayilan", ad:"Limon" }];
+    }
+    return d;
+  }
   function load(){
+    var d = null;
     try{
       var raw = localStorage.getItem(STORAGE_KEY);
-      if(raw) return JSON.parse(raw);
+      if(raw) d = JSON.parse(raw);
     }catch(e){}
-    return { cariler: [], satislar: [] };
+    return normalizeState(d);
   }
   function save(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -448,6 +474,11 @@
     var c = state.cariler.find(function(x){return x.id===id;});
     return c ? c.ad : "(silinmiş cari)";
   }
+  function urunAdi(id){
+    if(!id) return "-";
+    var u = state.urunTurleri.find(function(x){return x.id===id;});
+    return u ? u.ad : "(silinmiş ürün)";
+  }
 
   // ---------- NAV ----------
   var navBtns = document.querySelectorAll("nav button");
@@ -460,11 +491,13 @@
       if(btn.dataset.view==="rapor") renderRapor();
       if(btn.dataset.view==="cari") renderCariListesi();
       if(btn.dataset.view==="satis") renderSonSatislar();
+      if(btn.dataset.view==="ayarlar") renderUrunListesi();
     });
   });
 
   // ---------- SATIŞ EKRANI ----------
   var sCari = document.getElementById("s-cari");
+  var sUrun = document.getElementById("s-urun");
   var sTarih = document.getElementById("s-tarih");
   var sKilo = document.getElementById("s-kilo");
   var sFiyat = document.getElementById("s-fiyat");
@@ -488,6 +521,7 @@
   function satisDuzenlemeyeBasla(satis){
     duzenlenenSatisId = satis.id;
     sCari.value = satis.cariId;
+    sUrun.value = satis.urunTuruId || "";
     sTarih.value = satis.tarih;
     sKilo.value = satis.kilo;
     sFiyat.value = satis.fiyat;
@@ -558,13 +592,44 @@
     if(cur) sel.value = cur;
   }
 
+  function fillUrunSelect(sel, withAllOption){
+    var cur = sel.value;
+    sel.innerHTML = "";
+    if(withAllOption){
+      var opt0 = document.createElement("option");
+      opt0.value = "";
+      opt0.textContent = "Tüm Ürünler";
+      sel.appendChild(opt0);
+    }
+    if(state.urunTurleri.length===0){
+      if(!withAllOption){
+        var opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Önce ürün türü ekleyin";
+        sel.appendChild(opt);
+      }
+      return;
+    }
+    state.urunTurleri.slice().sort(function(a,b){
+      return a.ad.localeCompare(b.ad, "tr-TR", {sensitivity:"base"});
+    }).forEach(function(u){
+      var opt = document.createElement("option");
+      opt.value = u.id;
+      opt.textContent = u.ad;
+      sel.appendChild(opt);
+    });
+    if(cur) sel.value = cur;
+  }
+
   document.getElementById("s-kaydet").addEventListener("click", function(){
     var cariId = sCari.value;
+    var urunTuruId = sUrun.value;
     var kilo = parseFloat(sKilo.value);
     var fiyat = parseFloat(sFiyat.value);
     var tarih = sTarih.value;
 
     if(!cariId){ toast("Önce cari seçin / ekleyin"); return; }
+    if(!urunTuruId){ toast("Önce ürün türü seçin / ekleyin"); return; }
     if(!tarih){ toast("Tarih seçin"); return; }
     if(!kilo || kilo<=0){ toast("Geçerli kilo girin"); return; }
     if(!fiyat || fiyat<=0){ toast("Geçerli fiyat girin"); return; }
@@ -576,6 +641,7 @@
       var satis = state.satislar.find(function(s){return s.id===duzenlenenSatisId;});
       if(satis){
         satis.cariId = cariId;
+        satis.urunTuruId = urunTuruId;
         satis.tarih = tarih;
         satis.kilo = kilo;
         satis.fiyat = fiyat;
@@ -589,6 +655,7 @@
       state.satislar.push({
         id: uid(),
         cariId: cariId,
+        urunTuruId: urunTuruId,
         tarih: tarih,
         kilo: kilo,
         fiyat: fiyat,
@@ -617,7 +684,7 @@
     el.innerHTML = list.map(function(s){
       return '<div class="list-item">'+
         '<div>'+
-          '<div class="name">'+cariAdi(s.cariId)+'</div>'+
+          '<div class="name">'+cariAdi(s.cariId)+' · '+urunAdi(s.urunTuruId)+'</div>'+
           '<div class="meta">'+fmtTarih(s.tarih)+' · '+s.kilo+' kg × '+fmtPara(s.fiyat)+'</div>'+
         '</div>'+
         '<div style="text-align:right">'+
@@ -796,22 +863,121 @@
     });
   }
 
+  // ---------- AYARLAR: ÜRÜN TÜRLERİ ----------
+  var uAd = document.getElementById("u-ad");
+  var uKaydetBtn = document.getElementById("u-kaydet");
+  var uIptalBtn = document.getElementById("u-iptal");
+  var uFormBaslik = document.getElementById("u-form-baslik");
+  var duzenlenenUrunId = null;
+
+  function urunDuzenlemeyeBasla(urun){
+    duzenlenenUrunId = urun.id;
+    uAd.value = urun.ad;
+    uFormBaslik.textContent = "Ürün Türünü Düzenle";
+    uKaydetBtn.textContent = "Güncelle";
+    uIptalBtn.style.display = "block";
+    uAd.focus();
+  }
+  function urunDuzenlemeyiBitir(){
+    duzenlenenUrunId = null;
+    uAd.value = "";
+    uFormBaslik.textContent = "Yeni Ürün Türü Ekle";
+    uKaydetBtn.textContent = "Ürün Türü Ekle";
+    uIptalBtn.style.display = "none";
+  }
+  uIptalBtn.addEventListener("click", urunDuzenlemeyiBitir);
+
+  uKaydetBtn.addEventListener("click", function(){
+    var ad = uAd.value.trim();
+    if(!ad){ toast("Ürün türü adı girin"); return; }
+
+    tazele();
+    if(duzenlenenUrunId){
+      var urun = state.urunTurleri.find(function(u){return u.id===duzenlenenUrunId;});
+      if(urun) urun.ad = ad;
+      save();
+      urunDuzenlemeyiBitir();
+      toast("Ürün türü güncellendi ✓");
+    } else {
+      state.urunTurleri.push({ id: uid(), ad: ad });
+      save();
+      urunDuzenlemeyiBitir();
+      toast("Ürün türü eklendi ✓");
+    }
+    fillUrunSelect(sUrun);
+    fillUrunSelect(document.getElementById("r-urun"), true);
+    renderUrunListesi();
+    renderSonSatislar();
+    renderRapor();
+  });
+
+  function renderUrunListesi(){
+    var el = document.getElementById("urun-listesi");
+    if(state.urunTurleri.length===0){
+      el.className = "empty";
+      el.textContent = "Henüz ürün türü yok.";
+      return;
+    }
+    var liste = state.urunTurleri.slice().sort(function(a,b){
+      return a.ad.localeCompare(b.ad, "tr-TR", {sensitivity:"base"});
+    });
+    el.className = "";
+    el.innerHTML = liste.map(function(u){
+      return '<div class="list-item">'+
+        '<div class="name">'+u.ad+'</div>'+
+        '<div class="swipe-actions">'+
+          '<button class="icon-btn" data-editurun="'+u.id+'">✏️</button>'+
+          '<button class="icon-btn" data-delurun="'+u.id+'">🗑</button>'+
+        '</div>'+
+      '</div>';
+    }).join("");
+    el.querySelectorAll("[data-editurun]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.dataset.editurun;
+        var urun = state.urunTurleri.find(function(u){return u.id===id;});
+        if(urun) urunDuzenlemeyeBasla(urun);
+      });
+    });
+    el.querySelectorAll("[data-delurun]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.dataset.delurun;
+        var adetSatis = state.satislar.filter(function(s){return s.urunTuruId===id;}).length;
+        var msg = adetSatis>0 ? "Bu ürün türüne ait "+adetSatis+" satış kaydı var. Yine de silmek istiyor musunuz? (Satışlar kalır, ürün adı '(silinmiş ürün)' görünür)" : "Bu ürün türünü silmek istediğinize emin misiniz?";
+        if(confirm(msg)){
+          if(duzenlenenUrunId===id) urunDuzenlemeyiBitir();
+          tazele();
+          state.urunTurleri = state.urunTurleri.filter(function(u){return u.id!==id;});
+          save();
+          fillUrunSelect(sUrun);
+          fillUrunSelect(document.getElementById("r-urun"), true);
+          renderUrunListesi();
+          renderSonSatislar();
+          renderRapor();
+          toast("Ürün türü silindi");
+        }
+      });
+    });
+  }
+
   // ---------- RAPOR EKRANI ----------
   var rCari = document.getElementById("r-cari");
+  var rUrun = document.getElementById("r-urun");
   var rOdeme = document.getElementById("r-odeme");
   var rBas = document.getElementById("r-bas");
   var rBit = document.getElementById("r-bit");
-  [rCari, rOdeme, rBas, rBit].forEach(function(el){
+  [rCari, rUrun, rOdeme, rBas, rBit].forEach(function(el){
     el.addEventListener("change", renderRapor);
   });
 
   function filtreliSatislar(){
     var cariId = rCari.value;
+    var urunTuruId = rUrun.value;
     var odeme = rOdeme.value;
     var bas = rBas.value;
     var bit = rBit.value;
     return state.satislar.filter(function(s){
       if(cariId && s.cariId!==cariId) return false;
+      if(urunTuruId && s.urunTuruId!==urunTuruId) return false;
       if(odeme && s.odeme!==odeme) return false;
       if(bas && s.tarih < bas) return false;
       if(bit && s.tarih > bit) return false;
@@ -821,6 +987,7 @@
 
   function renderRapor(){
     fillCariSelect(rCari, true);
+    fillUrunSelect(rUrun, true);
     var list = filtreliSatislar();
 
     var toplam = 0, pesin = 0, veresiye = 0, kiloToplam = 0;
@@ -879,6 +1046,7 @@
         return '<tr>'+
           '<td>'+fmtTarih(s.tarih)+'</td>'+
           '<td>'+cariAdi(s.cariId)+'</td>'+
+          '<td>'+urunAdi(s.urunTuruId)+'</td>'+
           '<td>'+s.kilo+'</td>'+
           '<td>'+fmtPara(s.fiyat)+'</td>'+
           '<td>'+fmtPara(s.toplam)+'</td>'+
@@ -938,11 +1106,14 @@
         var data = JSON.parse(ev.target.result);
         if(!data.cariler || !data.satislar) throw new Error("Geçersiz format");
         if(confirm("İçe aktarma mevcut verinin üzerine yazacak. Devam edilsin mi?")){
-          state = data;
+          state = normalizeState(data);
           save();
           fillCariSelect(sCari, false);
           fillCariSelect(rCari, true);
+          fillUrunSelect(sUrun);
+          fillUrunSelect(rUrun, true);
           renderCariListesi();
+          renderUrunListesi();
           renderSonSatislar();
           renderRapor();
           toast("Veri içe aktarıldı ✓");
@@ -958,11 +1129,14 @@
   document.getElementById("y-temizle").addEventListener("click", function(){
     if(confirm("TÜM veriler (cariler ve satışlar) silinecek. Emin misiniz?")){
       if(confirm("Bu işlem geri alınamaz. Son kez onaylıyor musunuz?")){
-        state = { cariler: [], satislar: [] };
+        state = normalizeState({});
         save();
         fillCariSelect(sCari, false);
         fillCariSelect(rCari, true);
+        fillUrunSelect(sUrun);
+        fillUrunSelect(rUrun, true);
         renderCariListesi();
+        renderUrunListesi();
         renderSonSatislar();
         renderRapor();
         toast("Tüm veriler silindi");
@@ -973,7 +1147,10 @@
   // ---------- INIT ----------
   fillCariSelect(sCari, false);
   fillCariSelect(rCari, true);
+  fillUrunSelect(sUrun);
+  fillUrunSelect(rUrun, true);
   renderCariListesi();
+  renderUrunListesi();
   renderSonSatislar();
   renderRapor();
   updateToplamPreview();
@@ -983,8 +1160,11 @@
   function tumEkranlariYenile(){
     tazele();
     fillCariSelect(sCari, false);
-    fillCariSelect(document.getElementById("r-cari"), true);
+    fillCariSelect(rCari, true);
+    fillUrunSelect(sUrun);
+    fillUrunSelect(rUrun, true);
     renderCariListesi();
+    renderUrunListesi();
     renderSonSatislar();
     renderRapor();
   }
